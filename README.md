@@ -1,3 +1,3 @@
 # React + Vite + Cornerstone3D
 
-see code
+* fork from: https://github.com/cornerstonejs/vite-react-cornerstone3d
