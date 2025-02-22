@@ -7,10 +7,27 @@ import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader"
 import createImageIdsAndCacheMetaData from "./lib/createImageIdsAndCacheMetaData"
 import { IMAGE_INFO } from "./utils/image-info"
 import { getViewportInput } from "./utils/viewport-input"
+import { setTool } from "./utils/set-tool";
+import { setSegmentation } from "./utils/set-segmentation";
+
+const volumeName = 'CT_VOLUME_ID'; // Id of the volume less loader prefix
+const volumeLoaderScheme = 'cornerstoneStreamingImageVolume'; // Loader id which defines which volume loader to use
+const volumeId = `${volumeLoaderScheme}:${volumeName}`; // VolumeId with loader id + volume id
+
+const toolGroupId = 'myToolGroup';
+const renderingEngineId = "myRenderingEngine"
+const segmentationId = 'MY_SEGMENTATION_ID';
+
 
 volumeLoader.registerUnknownVolumeLoader(
   cornerstoneStreamingImageVolumeLoader
 )
+
+async function init() {
+  await csRenderInit()
+  await csToolsInit()
+  dicomImageLoaderInit({ maxWebWorkers: 1 })
+}
 
 function App() {
   const elementRef1 = useRef<HTMLDivElement>(null)
@@ -25,34 +42,50 @@ function App() {
       }
       running.current = true
 
-      await csRenderInit()
-      await csToolsInit()
-      dicomImageLoaderInit({ maxWebWorkers: 1 })
+      await init();
 
       // Get Cornerstone imageIds and fetch metadata into RAM
       const imageIds = await createImageIdsAndCacheMetaData(IMAGE_INFO)
 
       // Instantiate a rendering engine
-      const renderingEngineId = "myRenderingEngine"
       const renderingEngine = new RenderingEngine(renderingEngineId)
 
       // Define a volume in memory
-      const volumeId = "streamingImageVolume"
       const volume = await volumeLoader.createAndCacheVolume(volumeId, {
         imageIds,
       })
 
       const viewportInput = getViewportInput([elementRef1, elementRef2, elementRef3]);
+      const viewportIds = viewportInput.map((v) => v.viewportId);
       renderingEngine.setViewports(viewportInput);
 
       // Set the volume to load
       volume.load()
 
+      // add manipulation tools
+      setTool(toolGroupId, viewportIds[0])
+
       setVolumesForViewports(
         renderingEngine,
-        [{ volumeId }],
-        viewportInput.map((v) => v.viewportId),
+        [{
+          volumeId,
+          callback: ({ volumeActor }) => {
+            // set the windowLevel after the volumeActor is created
+            volumeActor
+              .getProperty()
+              .getRGBTransferFunction(0)
+              .setMappingRange(-180, 220);
+          },
+        }],
+        viewportIds,
       );
+      await setSegmentation({
+        volumeLoader,
+        volumeId,
+        viewportId: viewportIds[0],
+        segmentationId,
+      });
+      renderingEngine.renderViewports(viewportIds);
     }
 
     setup()
@@ -65,6 +98,7 @@ function App() {
       <div>
         <div
           ref={elementRef1}
+          onContextMenu={(e) => e.preventDefault()}
           className="w-[512px] h-[512px] bg-black"
         />
         <div
