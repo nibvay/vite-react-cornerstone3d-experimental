@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { RenderingEngine, type Types, volumeLoader, cornerstoneStreamingImageVolumeLoader, setVolumesForViewports } from "@cornerstonejs/core"
+import { RenderingEngine, volumeLoader, cornerstoneStreamingImageVolumeLoader, setVolumesForViewports } from "@cornerstonejs/core"
 import { init as csRenderInit } from "@cornerstonejs/core"
 import { init as csToolsInit } from "@cornerstonejs/tools"
 import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader"
@@ -13,12 +13,9 @@ volumeLoader.registerUnknownVolumeLoader(
 )
 
 function App() {
-  // const [orientation, setOrientation] = useState(Enums.OrientationAxis.AXIAL)
-
   const elementRef1 = useRef<HTMLDivElement>(null)
   const elementRef2 = useRef<HTMLDivElement>(null)
   const elementRef3 = useRef<HTMLDivElement>(null)
-  const viewportRef = useRef<Types.IVolumeViewport | null>(null)
   const running = useRef(false)
 
   useEffect(() => {
@@ -68,27 +65,15 @@ function App() {
       <div>
         <div
           ref={elementRef1}
-          style={{
-            width: "512px",
-            height: "512px",
-            backgroundColor: "#000",
-          }}
+          className="w-[512px] h-[512px] bg-black"
         />
         <div
           ref={elementRef2}
-          style={{
-            width: "512px",
-            height: "512px",
-            backgroundColor: "#000",
-          }}
+          className="w-[512px] h-[512px] bg-black"
         />
         <div
           ref={elementRef3}
-          style={{
-            width: "512px",
-            height: "512px",
-            backgroundColor: "#000",
-          }}
+          className="w-[512px] h-[512px] bg-black"
         />
       </div>
     </>
