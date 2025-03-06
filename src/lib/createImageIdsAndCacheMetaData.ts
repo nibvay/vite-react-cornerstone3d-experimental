@@ -1,5 +1,6 @@
 import { api } from "dicomweb-client"
 import cornerstoneDICOMImageLoader from "@cornerstonejs/dicom-image-loader"
+import { generateOrthancAuthorization } from "../../config";
 
 /**
 /**
@@ -29,7 +30,13 @@ export default async function createImageIdsAndCacheMetaData({
 
   client =
     client ||
-    new api.DICOMwebClient({ url: wadoRsRoot as string, singlepart: true })
+    new api.DICOMwebClient({
+      url: wadoRsRoot as string,
+      singlepart: true,
+      headers: {
+        Authorization: generateOrthancAuthorization(),
+      }
+    })
   const instances = await client.retrieveSeriesMetadata(studySearchOptions)
   const imageIds = instances.map((instanceMetaData) => {
     const SeriesInstanceUID = instanceMetaData[SERIES_INSTANCE_UID].Value[0]
@@ -53,6 +60,7 @@ export default async function createImageIdsAndCacheMetaData({
       imageId,
       instanceMetaData
     )
+    console.log({ imageId, instanceMetaData });
     return imageId
   })
 
